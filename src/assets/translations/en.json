@@ -1,0 +1,33 @@
+{
+    "translation": {
+        "SingOut": "SingOut",
+        "Contacts": "Contacts",
+        "Events": "Events",
+        "Profile": "Profile",
+        "Phone": "Phone",
+        "Language": "Language",
+        "Theme": "Theme",
+        "Search": "Search",
+        "CnList": "Contacts list",
+        "Title": "Title",
+        "Description": "Description",
+        "Date": "Date",
+        "Time": "Time",
+        "Owner": "Owner",
+        "DelBtn": "Delete event",
+        "SaveBtn": "Save",
+        "Event": "Event",
+        "NewEvent": "Create new event",
+        "Name": "Name",
+        "SetDate": "Set event date",
+        "Members": "Members",
+        "AddMember": "Add member",
+        "CreateEvent": "Create event",
+        "StartDate": "Start Date",
+        "EndDate": "End Date",
+        "SetEndDate": "Set end date",
+        "SetStartDate": "Set start date",
+        "Set": "Set",
+        "Cancel": "Cancel"
+    }
+}
