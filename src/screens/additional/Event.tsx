@@ -18,15 +18,23 @@ import {useTranslation} from 'react-i18next';
 
 // utils
 import {headerOptions} from '../../utils/constants';
+import {checkCalendarPermissions} from '../../utils/functions';
 
 // components
 import Button from '../../components/Button';
 import Alert from '../../components/Alert';
 import TextInput from '../../components/TextInput';
+import DateTimePicker from '../../components/DateTimePicker';
 import InputError from '../../components/InputError';
 
 // store
 import {useStore} from '../../stores';
+
+type SubmitForm = {
+  description: string;
+  name: string;
+  dateTime: any;
+};
 
 const Event = () => {
   const {t} = useTranslation();
@@ -42,18 +50,30 @@ const Event = () => {
 
   const {params} = useRoute<any>();
 
-  const [def, setDef] = useState({name: params.name, description: params.description});
+  const [def, setDef] = useState<SubmitForm>({
+    name: params.name,
+    description: params.description,
+    dateTime: {
+      endDate: params.dateTime.endDate.toDate(),
+      startDate: params.dateTime.startDate.toDate(),
+    },
+  });
 
   const navigation = useNavigation<any>();
 
   const [edit, setEdit] = useState(false);
 
+  const [alertData, setAlertData] = useState({
+    title: 'Are you sure?',
+    description: 'Deleting will remove this event for you and other members',
+  });
+
   const {
     control,
     handleSubmit,
     reset,
-    formState: {errors, isDirty},
-  } = useForm({criteriaMode: 'all', defaultValues: def});
+    formState: {errors},
+  } = useForm<SubmitForm>({criteriaMode: 'all', defaultValues: def});
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -67,7 +87,7 @@ const Event = () => {
       },
       headerLeft: () => (
         <TouchableOpacity onPress={onBackPress}>
-          <McIcon size={23} name={'arrow-left'} color={'white'} style={{marginRight: 20}} />
+          <McIcon size={23} name={'arrow-left'} color={'white'} style={styles.backArr} />
         </TouchableOpacity>
       ),
     });
@@ -93,7 +113,7 @@ const Event = () => {
             size={23}
             name={edit ? 'close-circle-outline' : 'calendar-edit'}
             color={'white'}
-            style={{marginRight: 20}}
+            style={styles.backArr}
           />
         </TouchableOpacity>
       ),
@@ -103,6 +123,7 @@ const Event = () => {
   const handleDelete = async () => {
     try {
       setLoading(true);
+
       const {dateTime} = params;
       const {endDate, startDate} = dateTime;
 
@@ -145,23 +166,82 @@ const Event = () => {
     try {
       setLoading(true);
 
+      const {dateTime, name, description} = data;
+      const {endDate, startDate} = params.dateTime;
+
+      const startForFetch = dayjs(startDate.toDate()).toISOString();
+      const endForFetch = dayjs(endDate.toDate()).toISOString();
+
+      const ev = await RNCalendarEvents.fetchAllEvents(startForFetch, endForFetch);
+      if (ev.length) {
+        const filteredEv: any = ev.filter(el => el.location === params.id);
+
+        if (filteredEv && filteredEv[0]) {
+          const start = dayjs(dateTime.startDate).toISOString();
+          const end = dayjs(dateTime.endDate).toISOString();
+
+          await RNCalendarEvents.saveEvent(name, {
+            id: filteredEv[0].id,
+            location: params.id,
+            description: description,
+            startDate: start,
+            endDate: end,
+          });
+        }
+      }
+
       const eventsRef = firestore().collection('meetings').doc(params.id);
       await eventsRef.update({...data});
 
       setDef({...data});
       setEdit(false);
     } catch (e) {
+      console.log(e);
       setLoading(false);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDenied = (type = 'perm') => {
+    switch (type) {
+      case 'perm':
+        setAlertData({
+          title: 'Calendar permission',
+          description:
+            'Please go to the app settings and give the app access to the calendar so that Tevliva can create upcoming event in your linked calendar',
+        });
+        setShow(true);
+        return;
+      default:
+        setAlertData({
+          title: 'Are you sure?',
+          description: 'Deleting will remove this event for you and other members',
+        });
+        setShow(true);
+        return;
+    }
+  };
+
+  const onPermRequest = async (data: any) => {
+    await checkCalendarPermissions(
+      () => handleSave(data),
+      () => handleDenied()
+    );
+  };
+
+  const onPermRequestDelete = async (data: any) => {
+    await checkCalendarPermissions(
+      () => handleDelete(),
+      () => handleDenied()
+    );
+  };
+
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <View style={styles.container}>
         <View style={styles.topContainer}>
-          <Text style={{color: 'white'}}>{t('Title')}</Text>
+          <Text style={styles.topText}>{t('Title')}</Text>
 
           <Controller
             name="name"
@@ -191,10 +271,9 @@ const Event = () => {
               />
             )}
           />
-          <InputError error={errors.name} textStyle={{marginTop: 0, marginBottom: 5}} />
+          <InputError error={errors.name} textStyle={styles.errText} />
 
-          <Text style={{color: 'white'}}>{t('Description')}</Text>
-
+          <Text style={styles.topText}>{t('Description')}</Text>
           <Controller
             name="description"
             control={control}
@@ -223,31 +302,37 @@ const Event = () => {
               />
             )}
           />
-          <InputError error={errors.description} textStyle={{marginTop: 0, marginBottom: 5}} />
+          <InputError error={errors.description} textStyle={styles.errText} />
         </View>
-        <View style={{paddingHorizontal: 20, flex: 1}}>
-          <Text style={{marginTop: 10}}>{t('Date')}</Text>
-          <Text style={{fontSize: 20, marginBottom: 10}}>
-            {dayjs(params.dateTime.startDate.toDate()).format('DD/MM/YYYY')}
-          </Text>
 
-          <Text>{t('Time')}</Text>
-          <Text style={{fontSize: 20, marginBottom: 10}}>
-            {`${dayjs(params.dateTime.startDate.toDate()).format('HH:mm')} - ${dayjs(
-              params.dateTime.endDate.toDate()
-            ).format('HH:mm')}`}
-          </Text>
+        <View style={styles.centerContainer}>
+          <Text style={styles.centerTextTitle}>{`${t('Date')}/${t('Time')}`}</Text>
+          <Controller
+            name="dateTime"
+            control={control}
+            render={({field}) => {
+              return (
+                <DateTimePicker
+                  {...field}
+                  disable={!edit}
+                  dir={'col'}
+                  containerStyle={styles.dateStyle}
+                />
+              );
+            }}
+          />
 
-          <Text>{t('Owner')}</Text>
-          <Text style={{fontSize: 20, marginBottom: 10}}>{params.owner}</Text>
+          <Text style={styles.centerTextTitle}>{t('Owner')}</Text>
+          <Text style={styles.centerTextDes}>{params.owner}</Text>
         </View>
+
         {user.displayName === params.owner ? (
           <View style={styles.bottomContainer}>
             {!edit ? (
               <Button
                 containerStyle={styles.button}
                 contentWrap={{backgroundColor: 'white'}}
-                onPress={() => setShow(true)}
+                onPress={() => handleDenied('del')}
                 text={t('DelBtn')}
                 iconName={'calendar-remove-outline'}
                 iconColor={'red'}
@@ -256,7 +341,7 @@ const Event = () => {
             ) : (
               <Button
                 containerStyle={styles.button}
-                onPress={handleSubmit(handleSave)}
+                onPress={handleSubmit(onPermRequest)}
                 contentWrap={{backgroundColor: 'white'}}
                 text={t('Save')}
                 iconColor={'black'}
@@ -271,12 +356,11 @@ const Event = () => {
 
         <Alert
           visible={show}
-          onAnswer={handleDelete}
+          onAnswer={onPermRequestDelete}
           onClose={() => setShow(false)}
           cancelable
           loading={loading}
-          title={'Are you sure?'}
-          description={'Deleting will remove this event for you and other members'}
+          {...alertData}
         />
       </View>
     </TouchableWithoutFeedback>
@@ -339,6 +423,34 @@ const createStyles = (theme: any) =>
     focused: {
       borderBottomWidth: 1,
       borderColor: '#ECEFF6',
+    },
+    dateStyle: {
+      flexDirection: 'column',
+      backgroundColor: 'white',
+      borderColor: '#00B3FE',
+      borderWidth: 1,
+      marginTop: 5,
+    },
+    backArr: {
+      marginRight: 20,
+    },
+    topText: {
+      color: 'white',
+    },
+    errText: {
+      marginTop: 0,
+      marginBottom: 5,
+    },
+    centerContainer: {
+      paddingHorizontal: 20,
+      flex: 1,
+    },
+    centerTextTitle: {
+      marginTop: 10,
+    },
+    centerTextDes: {
+      fontSize: 20,
+      marginBottom: 10,
     },
   });
 

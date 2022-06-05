@@ -62,15 +62,13 @@ const App = observer(() => {
   }, []);
 
   useEffect(() => {
-    if (dayjs().format('DD/MM/YYYY') === '02/06/2022') {
-      const timer = setTimeout(() => {
-        RNBootSplash.hide();
-      }, 5000);
+    const timer = setTimeout(() => {
+      RNBootSplash.hide();
+    }, 5000);
 
-      return () => {
-        clearTimeout(timer);
-      };
-    }
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
   return (

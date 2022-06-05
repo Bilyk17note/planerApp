@@ -6,6 +6,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import {useTheme} from '@react-navigation/native';
 import {useNavigation} from '@react-navigation/native';
@@ -14,9 +15,9 @@ import {v4 as uuidv4} from 'uuid';
 import firestore from '@react-native-firebase/firestore';
 import {observer} from 'mobx-react';
 import McIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import RNCalendarEvents from 'react-native-calendar-events';
 import dayjs from 'dayjs';
 import {useTranslation} from 'react-i18next';
+import RNCalendarEvents from 'react-native-calendar-events';
 
 // components
 import TextInput from '../../components/TextInput';
@@ -31,6 +32,7 @@ import {useStore} from '../../stores';
 
 // utils
 import {headerOptions} from '../../utils/constants';
+import {checkCalendarPermissions} from '../../utils/functions';
 
 const NewMeet = observer(() => {
   const {t} = useTranslation();
@@ -46,8 +48,6 @@ const NewMeet = observer(() => {
 
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
-
-  const [alertData, setAlertData] = useState({});
 
   const {
     control,
@@ -106,9 +106,7 @@ const NewMeet = observer(() => {
         description: `${description}`,
       };
 
-      targetCalendar.forEach(el => {
-        RNCalendarEvents.saveEvent(name, {...setting, calendarId: el.id});
-      });
+      RNCalendarEvents.saveEvent(name, {...setting, calendarId: targetCalendar[0].id});
 
       await firestore().collection('meetings').doc(id).set(meetData);
 
@@ -132,30 +130,7 @@ const NewMeet = observer(() => {
   };
 
   const handleDenied = () => {
-    setAlertData({
-      title: 'Calendar permission',
-      description:
-        'Please go to the app settings and give the app access to the calendar so that Tevliva can create upcoming event in your linked calendar',
-      cancelable: true,
-    });
     setShow(true);
-  };
-
-  const checkCalendarPermissions = async (allowFunc: any, deniedFunc: any) => {
-    const perm = await RNCalendarEvents.checkPermissions();
-    if (perm === 'authorized') {
-      return allowFunc();
-    }
-
-    const requestPerm = await RNCalendarEvents.requestPermissions();
-    if (requestPerm) {
-      switch (requestPerm) {
-        case 'authorized':
-          return allowFunc();
-        case 'denied':
-          return deniedFunc();
-      }
-    }
   };
 
   const onPermRequest = async (data: any) => {
@@ -165,7 +140,9 @@ const NewMeet = observer(() => {
     );
   };
 
-  const handleAlertAnswer = () => {};
+  const handleAlertAnswer = () => {
+    Linking.openSettings().then(() => setShow(false));
+  };
 
   const handleAlertClose = () => {
     setShow(false);
@@ -248,7 +225,11 @@ const NewMeet = observer(() => {
           visible={show}
           onAnswer={handleAlertAnswer}
           onClose={handleAlertClose}
-          {...alertData}
+          cancelable
+          description={
+            'Please go to the app settings and give the app access to the calendar so that Tevliva can create upcoming event in your linked calendar'
+          }
+          title={'Calendar permission'}
         />
       </View>
     </TouchableWithoutFeedback>

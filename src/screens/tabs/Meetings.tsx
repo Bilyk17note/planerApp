@@ -55,6 +55,7 @@ const Meetings = observer(() => {
   }, []);
 
   const getEvents = async (junctions: any) => {
+    setLoading(true);
     const courses = await Promise.all(
       junctions.docs
         .filter((doc: any) => doc.exists)
@@ -68,6 +69,7 @@ const Meetings = observer(() => {
 
     const sectionList = getSectionList(res);
     setList(sectionList);
+    setLoading(false);
   };
 
   const getSectionList = (arr: any[]) => {
