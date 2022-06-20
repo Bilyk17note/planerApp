@@ -2,10 +2,10 @@
 import firebase from '@react-native-firebase/app';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyCEbGZgcic-Q2cGdK_58h-q-iEcwAVgBbI',
-  authDomain: 'smartplanner-1874f.firebaseapp.com',
-  projectId: 'smartplanner-1874f',
-  appId: '1:53286443650:android:8d280c76370513ef60729b',
+  apiKey: 'AIzaSyDDj16YI9CFW3Hlf4P_PLbLa9b__7sxcS0',
+  authDomain: 'smartplan-313d8.firebaseapp.com',
+  projectId: 'smartplan-313d8',
+  appId: '1:159405658976:android:9433016465195d7e1ac405',
 };
 
 const initializeApp = (): void => {

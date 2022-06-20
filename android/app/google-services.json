@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "53286443650",
-    "project_id": "smartplanner-1874f",
-    "storage_bucket": "smartplanner-1874f.appspot.com"
+    "project_number": "159405658976",
+    "project_id": "smartplan-313d8",
+    "storage_bucket": "smartplan-313d8.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:53286443650:android:8d280c76370513ef60729b",
+        "mobilesdk_app_id": "1:159405658976:android:9433016465195d7e1ac405",
         "android_client_info": {
           "package_name": "com.plannerapp"
         }
       },
       "oauth_client": [
         {
-          "client_id": "53286443650-qapoe21356p8nrvvhseecq52uvnfema6.apps.googleusercontent.com",
+          "client_id": "159405658976-p8b56mupi5vclp0seelentile2e63lqs.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCEbGZgcic-Q2cGdK_58h-q-iEcwAVgBbI"
+          "current_key": "AIzaSyDDj16YI9CFW3Hlf4P_PLbLa9b__7sxcS0"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "53286443650-qapoe21356p8nrvvhseecq52uvnfema6.apps.googleusercontent.com",
+              "client_id": "159405658976-p8b56mupi5vclp0seelentile2e63lqs.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
